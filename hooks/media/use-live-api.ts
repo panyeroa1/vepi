@@ -147,6 +147,152 @@ export function useLiveApi({
            }
         }
 
+        if (fc.name === 'list_drive_files') {
+            const { pageSize = 10, q = '' } = fc.args as any;
+            const token = await getAccessToken();
+            if (!token) {
+                responsePayload = { error: 'No Google access token found.' };
+            } else {
+                try {
+                    const url = `https://www.googleapis.com/drive/v3/files?pageSize=${pageSize}&q=${encodeURIComponent(q)}&fields=files(id, name, mimeType, webViewLink, modifiedTime)`;
+                    const res = await fetch(url, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    responsePayload = await res.json();
+                } catch (e: any) {
+                    responsePayload = { error: e.message };
+                }
+            }
+        }
+
+        if (fc.name === 'read_google_doc') {
+            const { documentId } = fc.args as any;
+            const token = await getAccessToken();
+            if (!token) {
+                responsePayload = { error: 'No Google access token found.' };
+            } else {
+                try {
+                    const res = await fetch(`https://docs.googleapis.com/v1/documents/${documentId}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    responsePayload = await res.json();
+                } catch (e: any) {
+                    responsePayload = { error: e.message };
+                }
+            }
+        }
+
+        if (fc.name === 'read_spreadsheet') {
+            const { spreadsheetId, range } = fc.args as any;
+            const token = await getAccessToken();
+            if (!token) {
+                responsePayload = { error: 'No Google access token found.' };
+            } else {
+                try {
+                    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    responsePayload = await res.json();
+                } catch (e: any) {
+                    responsePayload = { error: e.message };
+                }
+            }
+        }
+
+        if (fc.name === 'list_contacts') {
+            const { pageSize = 10 } = fc.args as any;
+            const token = await getAccessToken();
+            if (!token) {
+                responsePayload = { error: 'No Google access token found.' };
+            } else {
+                try {
+                    const res = await fetch(`https://people.googleapis.com/v1/people/me/connections?pageSize=${pageSize}&personFields=names,emailAddresses,phoneNumbers`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    responsePayload = await res.json();
+                } catch (e: any) {
+                    responsePayload = { error: e.message };
+                }
+            }
+        }
+
+        if (fc.name === 'list_tasks') {
+            const { tasklist = '@default' } = fc.args as any;
+            const token = await getAccessToken();
+            if (!token) {
+                responsePayload = { error: 'No Google access token found.' };
+            } else {
+                try {
+                    const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${tasklist}/tasks`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    responsePayload = await res.json();
+                } catch (e: any) {
+                    responsePayload = { error: e.message };
+                }
+            }
+        }
+
+        if (fc.name === 'send_chat_message') {
+            const { spaceName, text } = fc.args as any;
+            const token = await getAccessToken();
+            if (!token) {
+                responsePayload = { error: 'No Google access token found.' };
+            } else {
+                try {
+                    const res = await fetch(`https://chat.googleapis.com/v1/${spaceName}/messages`, {
+                        method: 'POST',
+                        headers: { 
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ text })
+                    });
+                    responsePayload = await res.json();
+                } catch (e: any) {
+                    responsePayload = { error: e.message };
+                }
+            }
+        }
+
+        if (fc.name === 'create_meet_link') {
+            const { summary } = fc.args as any;
+            const token = await getAccessToken();
+            if (!token) {
+                responsePayload = { error: 'No Google access token found.' };
+            } else {
+                try {
+                    // Create an event with conferenceData to get a Meet link
+                    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', {
+                        method: 'POST',
+                        headers: { 
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            summary: summary || 'Quick Meeting',
+                            start: { dateTime: new Date().toISOString() },
+                            end: { dateTime: new Date(Date.now() + 30 * 60 * 1000).toISOString() },
+                            conferenceData: {
+                                createRequest: {
+                                    requestId: Math.random().toString(36).substring(7),
+                                    conferenceSolutionKey: { type: 'hangoutsMeet' }
+                                }
+                            }
+                        })
+                    });
+                    const data = await res.json();
+                    responsePayload = { 
+                        meetLink: data.hangoutLink || data.conferenceData?.entryPoints?.[0]?.uri,
+                        eventId: data.id,
+                        status: 'Meeting created'
+                    };
+                } catch (e: any) {
+                    responsePayload = { error: e.message };
+                }
+            }
+        }
+
         if (fc.name === 'send_whatsapp_message') {
             const { phone, message } = fc.args as any;
             try {

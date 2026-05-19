@@ -10,6 +10,97 @@ import { FunctionResponseScheduling } from '@google/genai';
 
 export const workspaceTools: FunctionCall[] = [
   {
+    name: "list_drive_files",
+    description: "Lists files from the user's Google Drive.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        pageSize: { type: "NUMBER", description: "Number of files to return." },
+        q: { type: "STRING", description: "Search query (e.g., name contains 'Q1')." }
+      }
+    },
+    isEnabled: true,
+    scheduling: FunctionResponseScheduling.INTERRUPT,
+  },
+  {
+    name: "read_google_doc",
+    description: "Reads the content of a Google Doc.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        documentId: { type: "STRING", description: "The ID of the document." }
+      },
+      required: ["documentId"]
+    },
+    isEnabled: true,
+    scheduling: FunctionResponseScheduling.INTERRUPT,
+  },
+  {
+    name: "read_spreadsheet",
+    description: "Reads data from a Google Sheet.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        spreadsheetId: { type: "STRING", description: "The ID of the spreadsheet." },
+        range: { type: "STRING", description: "The A1 notation of the range to read (e.g., 'Sheet1!A1:B10')." }
+      },
+      required: ["spreadsheetId", "range"]
+    },
+    isEnabled: true,
+    scheduling: FunctionResponseScheduling.INTERRUPT,
+  },
+  {
+    name: "list_contacts",
+    description: "Lists the user's Google Contacts.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        pageSize: { type: "NUMBER", description: "Number of contacts to return." }
+      }
+    },
+    isEnabled: true,
+    scheduling: FunctionResponseScheduling.INTERRUPT,
+  },
+  {
+    name: "list_tasks",
+    description: "Lists the user's tasks from Google Tasks.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        tasklist: { type: "STRING", description: "The ID of the task list (default: '@default')." }
+      }
+    },
+    isEnabled: true,
+    scheduling: FunctionResponseScheduling.INTERRUPT,
+  },
+  {
+    name: "send_chat_message",
+    description: "Sends a message to a Google Chat space.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        spaceName: { type: "STRING", description: "The name/ID of the space (e.g., 'spaces/AAAAAAAA')." },
+        text: { type: "STRING", description: "The message content." }
+      },
+      required: ["spaceName", "text"]
+    },
+    isEnabled: true,
+    scheduling: FunctionResponseScheduling.INTERRUPT,
+  },
+  {
+    name: "create_meet_link",
+    description: "Creates a Google Meet link by scheduling a quick calendar event.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        summary: { type: "STRING", description: "The title of the meeting." }
+      },
+      required: ["summary"]
+    },
+    isEnabled: true,
+    scheduling: FunctionResponseScheduling.INTERRUPT,
+  },
+  {
     name: "fetch_google_api",
     description: "Fetches data from Google APIs. The AI decides the correct Google API endpoint URL based on what the user wants to fetch (e.g., https://www.googleapis.com/calendar/v3/calendars/primary/events for Calendar; https://gmail.googleapis.com/gmail/v1/users/me/messages for Gmail). Use this to read, create, update, or delete Google Workspace data. It operates with the user's accessToken. If doing a mutating operation, make sure the user has given consent.",
     isEnabled: true,

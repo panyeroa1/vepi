@@ -1,9 +1,9 @@
 {
-  "projectId": "remixed-project-id",
-  "appId": "remixed-app-id",
-  "apiKey": "remixed-api-key",
-  "authDomain": "remixed-auth-domain",
-  "storageBucket": "remixed-storage-bucket",
-  "messagingSenderId": "remixed-messaging-sender-id",
-  "measurementId": "remixed-measurement-id"
+  "projectId": "tudds-ccd0wn",
+  "appId": "1:786974954352:web:0d13ea0cecbc917d9bb5b5",
+  "apiKey": "AIzaSyCye44BrwpgdEvi5FmO1NOkruc5u71UQzM",
+  "authDomain": "tudds-ccd0wn.firebaseapp.com",
+  "storageBucket": "tudds-ccd0wn.appspot.com",
+  "messagingSenderId": "786974954352",
+  "measurementId": ""
 }
