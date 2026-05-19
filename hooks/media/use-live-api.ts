@@ -294,9 +294,17 @@ export function useLiveApi({
         }
 
         if (fc.name === 'send_whatsapp_message') {
-            const { phone, message } = fc.args as any;
+            const { phone, text } = fc.args as any;
             try {
-                responsePayload = await api.sendWhatsappMessage(phone, message);
+                responsePayload = await api.sendWhatsappMessage(phone, text);
+            } catch (e: any) {
+                responsePayload = { error: e.message };
+            }
+        }
+
+        if (fc.name === 'connect_whatsapp') {
+            try {
+                responsePayload = await api.connectWhatsapp();
             } catch (e: any) {
                 responsePayload = { error: e.message };
             }

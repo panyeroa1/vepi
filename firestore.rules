@@ -24,10 +24,20 @@ service cloud.firestore {
 
     function isValidNote(data) {
       return data.keys().hasAll(['title', 'content', 'createdAt', 'updatedAt'])
+        && data.keys().size() == 4
         && data.title is string && data.title.size() <= 200
         && data.content is string && data.content.size() <= 10000
         && data.createdAt is string
         && data.updatedAt is string;
+    }
+
+    function isValidWhatsAppMessage(data) {
+      return data.keys().hasAll(['phone', 'text', 'direction', 'timestamp'])
+        && data.keys().size() >= 4
+        && data.phone is string && data.phone.size() <= 32
+        && data.text is string && data.text.size() <= 5000
+        && data.direction in ['sent', 'received']
+        && data.timestamp is string;
     }
 
     match /users/{userId} {
@@ -38,7 +48,14 @@ service cloud.firestore {
       match /notes/{noteId} {
         allow list, get: if isSignedIn() && request.auth.uid == userId;
         allow create: if isSignedIn() && request.auth.uid == userId && isValidNote(request.resource.data);
-        allow update: if isSignedIn() && request.auth.uid == userId && isValidNote(request.resource.data);
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidNote(request.resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'content', 'updatedAt']);
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+
+      match /whatsapp_messages/{messageId} {
+        allow list, get: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidWhatsAppMessage(request.resource.data);
         allow delete: if isSignedIn() && request.auth.uid == userId;
       }
     }

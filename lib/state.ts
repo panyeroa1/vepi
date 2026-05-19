@@ -6,6 +6,7 @@ import { create } from 'zustand';
 import { customerSupportTools } from './tools/customer-support';
 import { personalAssistantTools } from './tools/personal-assistant';
 import { navigationSystemTools } from './tools/navigation-system';
+import { whatsappTools } from './tools/whatsapp';
 import { FunctionResponseScheduling } from '@google/genai';
 
 export const workspaceTools: FunctionCall[] = [
@@ -329,29 +330,15 @@ export const workspaceTools: FunctionCall[] = [
       },
       required: ["text"]
     }
-  },
-  {
-    name: "send_whatsapp_message",
-    description: "Sends a text message to a WhatsApp phone number.",
-    isEnabled: true,
-    scheduling: FunctionResponseScheduling.INTERRUPT,
-    parameters: {
-      type: "OBJECT",
-      properties: {
-        phone: { type: "STRING", description: "The recipient's phone number in international format." },
-        message: { type: "STRING" }
-      },
-      required: ["phone", "message"]
-    }
   }
 ];
 
 export type Template = 'customer-support' | 'personal-assistant' | 'navigation-system';
 
 const toolsets: Record<Template, FunctionCall[]> = {
-  'customer-support': [...workspaceTools],
-  'personal-assistant': [...personalAssistantTools, ...workspaceTools],
-  'navigation-system': [...workspaceTools],
+  'customer-support': [...workspaceTools, ...whatsappTools],
+  'personal-assistant': [...personalAssistantTools, ...workspaceTools, ...whatsappTools],
+  'navigation-system': [...workspaceTools, ...whatsappTools],
 };
 
 const systemPrompts: Record<Template, string> = {

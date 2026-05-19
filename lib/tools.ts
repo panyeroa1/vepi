@@ -4,11 +4,12 @@
 */
 
 import { FunctionResponseScheduling } from '@google/genai';
-import { FunctionCall } from './state';
+import { FunctionCall, workspaceTools } from './state';
 import { personalAssistantTools } from './tools/personal-assistant';
-import { workspaceTools } from './tools/workspace';
+import { whatsappTools } from './tools/whatsapp';
 
 export const AVAILABLE_TOOLS: FunctionCall[] = [
   ...personalAssistantTools,
-  ...workspaceTools
+  ...workspaceTools,
+  ...whatsappTools
 ];

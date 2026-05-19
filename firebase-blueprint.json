@@ -26,6 +26,19 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "content", "createdAt", "updatedAt"]
+    },
+    "WhatsAppMessage": {
+      "title": "WhatsApp Message",
+      "description": "Log of a sent or received WhatsApp message",
+      "type": "object",
+      "properties": {
+        "phone": { "type": "string" },
+        "text": { "type": "string" },
+        "direction": { "type": "string", "enum": ["sent", "received"] },
+        "status": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["phone", "text", "direction", "timestamp"]
     }
   },
   "firestore": {
@@ -36,6 +49,10 @@
     "/users/{userId}/notes/{noteId}": {
       "schema": "Note",
       "description": "Collection of personal notes for the user"
+    },
+    "/users/{userId}/whatsapp_messages/{messageId}": {
+      "schema": "WhatsAppMessage",
+      "description": "History of WhatsApp communications"
     }
   }
 }

@@ -71,82 +71,96 @@ async function startServer() {
     res.redirect('https://ui-avatars.com/api/?name=Beatrice&background=cbfb45&color=000&size=200');
   });
 
-  // Settings
+  // Settings (Migrated to Firestore)
   app.get('/api/settings', authenticateToken, async (req: any, res) => {
-    if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
     try {
-      const { data, error } = await supabase
-        .from('user_settings')
-        .select('*')
-        .eq('user_id', req.user.uid)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') throw error;
-      res.json(data || {
-        persona_name: 'Beatrice',
-        user_call_name: 'Boss',
-        voice: 'Puck',
-        language: 'English',
-        system_prompt: 'Classic Beatrice behavior.'
-      });
+      const firestore = getFirebaseAdmin().firestore();
+      const doc = await firestore.collection('users').doc(req.user.uid).get();
+      if (!doc.exists) {
+        return res.json({
+          persona_name: 'Beatrice',
+          user_call_name: 'Boss',
+          voice: 'Puck',
+          language: 'English',
+          system_prompt: 'Classic Beatrice behavior.'
+        });
+      }
+      res.json(doc.data());
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
   });
 
   app.put('/api/settings', authenticateToken, async (req: any, res) => {
-    if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
     try {
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert({ user_id: req.user.uid, ...req.body, updated_at: new Date().toISOString() });
-      if (error) throw error;
+      const firestore = getFirebaseAdmin().firestore();
+      await firestore.collection('users').doc(req.user.uid).set({
+        ...req.body,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
       res.json({ success: true });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
   });
 
-  // Memories
+  // Memories (Migrated to Firestore)
   app.get('/api/memories', authenticateToken, async (req: any, res) => {
-    if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
     try {
-      const { data, error } = await supabase
-        .from('user_memories')
-        .select('*')
-        .eq('user_id', req.user.uid)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      res.json(data);
+      const firestore = getFirebaseAdmin().firestore();
+      const userDoc = await firestore.collection('users').doc(req.user.uid).get();
+      const memories = userDoc.exists ? (userDoc.data()?.memories || []) : [];
+      res.json(memories);
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
   });
 
   app.post('/api/memories', authenticateToken, async (req: any, res) => {
-    if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
     try {
-      const { data, error } = await supabase
-        .from('user_memories')
-        .insert([{ user_id: req.user.uid, ...req.body, created_at: new Date().toISOString() }])
-        .select()
-        .single();
-      if (error) throw error;
-      res.status(201).json(data);
+      const firestore = getFirebaseAdmin().firestore();
+      const memory = {
+        id: Math.random().toString(36).substring(7),
+        ...req.body,
+        created_at: new Date().toISOString()
+      };
+      await firestore.collection('users').doc(req.user.uid).update({
+        memories: admin.firestore.FieldValue.arrayUnion(memory),
+        updatedAt: new Date().toISOString()
+      });
+      res.status(201).json(memory);
     } catch (e: any) {
+      // If user doc doesn't exist, create it
+      if (e.code === 5 || e.message.includes('NOT_FOUND')) {
+        const firestore = getFirebaseAdmin().firestore();
+        const memory = {
+          id: Math.random().toString(36).substring(7),
+          ...req.body,
+          created_at: new Date().toISOString()
+        };
+        await firestore.collection('users').doc(req.user.uid).set({
+          memories: [memory],
+          updatedAt: new Date().toISOString()
+        });
+        return res.status(201).json(memory);
+      }
       res.status(500).json({ error: e.message });
     }
   });
 
   app.delete('/api/memories/:id', authenticateToken, async (req: any, res) => {
-    if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
     try {
-      const { error } = await supabase
-        .from('user_memories')
-        .delete()
-        .eq('id', req.params.id)
-        .eq('user_id', req.user.uid);
-      if (error) throw error;
+      const firestore = getFirebaseAdmin().firestore();
+      const userDoc = await firestore.collection('users').doc(req.user.uid).get();
+      if (!userDoc.exists) return res.sendStatus(404);
+      
+      const memories = userDoc.data()?.memories || [];
+      const updatedMemories = memories.filter((m: any) => m.id !== req.params.id);
+      
+      await firestore.collection('users').doc(req.user.uid).update({
+        memories: updatedMemories,
+        updatedAt: new Date().toISOString()
+      });
       res.json({ success: true });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
@@ -176,11 +190,14 @@ async function startServer() {
     if (!gowaUrl) return res.status(503).json({ error: 'GoWA API not configured' });
     
     try {
-      const response = await fetch(`${gowaUrl}/instance/connect`, {
-        headers: {
-          'Authorization': `Basic ${Buffer.from(`${process.env.GOWA_USERNAME}:${process.env.GOWA_PASSWORD}`).toString('base64')}`
-        }
-      });
+      const headers: any = {
+        'Authorization': `Basic ${Buffer.from(`${process.env.GOWA_USERNAME}:${process.env.GOWA_PASSWORD}`).toString('base64')}`
+      };
+      if (process.env.GOWA_TRAEFIK_HOST) {
+        headers['Host'] = process.env.GOWA_TRAEFIK_HOST;
+      }
+
+      const response = await fetch(`${gowaUrl}/instance/connect`, { headers });
       res.json(await response.json());
     } catch (e: any) {
       res.status(500).json({ error: e.message });
@@ -192,18 +209,39 @@ async function startServer() {
     if (!gowaUrl) return res.status(503).json({ error: 'GoWA API not configured' });
     
     try {
+      const headers: any = {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${Buffer.from(`${process.env.GOWA_USERNAME}:${process.env.GOWA_PASSWORD}`).toString('base64')}`
+      };
+      if (process.env.GOWA_TRAEFIK_HOST) {
+        headers['Host'] = process.env.GOWA_TRAEFIK_HOST;
+      }
+
       const response = await fetch(`${gowaUrl}/message/sendText`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${Buffer.from(`${process.env.GOWA_USERNAME}:${process.env.GOWA_PASSWORD}`).toString('base64')}`
-        },
+        headers,
         body: JSON.stringify({
           number: req.body.phone,
-          text: req.body.message
+          text: req.body.text
         })
       });
-      res.json(await response.json());
+      const result = await response.json();
+
+      // Log to Firestore
+      try {
+        const firestore = getFirebaseAdmin().firestore();
+        await firestore.collection('users').doc(req.user.uid).collection('whatsapp_messages').add({
+          phone: req.body.phone,
+          text: req.body.text,
+          direction: 'sent',
+          status: result.status || 'success',
+          timestamp: new Date().toISOString()
+        });
+      } catch (logErr) {
+        console.warn('Failed to log WhatsApp message to Firestore:', logErr);
+      }
+
+      res.json(result);
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
