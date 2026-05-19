@@ -1,10 +1,10 @@
 {
-  "projectId": "aitek2023-8f504",
-  "appId": "1:570516064142:web:4295ac58f059de7b5886df",
-  "apiKey": "AIzaSyBN_jXpDrup5LwPcSI2Pmvi0s6jFWtsWFc",
+  "apiKey": "AIzaSyDBFlUQBJvboua_021Vj5iFYrKEs8pxOew",
   "authDomain": "aitek2023-8f504.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-cfced1ab-9bd2-4a48-bf30-310ca9945e20",
+  "databaseURL": "https://aitek2023-8f504-default-rtdb.firebaseio.com",
+  "projectId": "aitek2023-8f504",
   "storageBucket": "aitek2023-8f504.appspot.com",
   "messagingSenderId": "570516064142",
-  "measurementId": ""
+  "appId": "1:570516064142:web:8a403c708e9732625886df",
+  "measurementId": "G-XF528QWWM6"
 }

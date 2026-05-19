@@ -6,7 +6,8 @@ import ReactMarkdown from 'react-markdown';
 import { Modality } from '@google/genai';
 import { useVideoStream } from './hooks/use-video-stream';
 import { LANGUAGES } from './lib/languages';
-import { auth, db, handleFirestoreError, OperationType, initAuth, googleSignIn } from './lib/firebase';
+import { auth, db, handleFirestoreError, OperationType, initAuth, googleSignIn, getAccessToken } from './lib/firebase';
+import firebaseConfig from './firebase-applet-config.json';
 import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDocFromServer, setDoc } from 'firebase/firestore';
 import { 
@@ -107,6 +108,49 @@ export default function EburonApp() {
   const [micState, setMicState] = useState(false);
   const [clientVolume, setClientVolume] = useState(0);
   const [audioRecorder] = useState(() => new AudioRecorder());
+  const [isPickerLoaded, setIsPickerLoaded] = useState(false);
+
+  useEffect(() => {
+    const loadPicker = () => {
+      if ((window as any).gapi) {
+        (window as any).gapi.load('picker', {
+          callback: () => setIsPickerLoaded(true)
+        });
+      } else {
+        setTimeout(loadPicker, 500);
+      }
+    };
+    loadPicker();
+  }, []);
+
+  const handleOpenPicker = async () => {
+    if (!isPickerLoaded) {
+      alert("Google Picker library is still loading...");
+      return;
+    }
+    
+    const token = await getAccessToken();
+    if (!token) {
+      alert("Please sign in with Google first.");
+      return;
+    }
+
+    const picker = new (window as any).google.picker.PickerBuilder()
+      .addView((window as any).google.picker.ViewId.DOCS)
+      .setOAuthToken(token)
+      .setDeveloperKey(firebaseConfig.apiKey)
+      .setCallback((data: any) => {
+        if (data.action === (window as any).google.picker.Action.PICKED) {
+          const doc = data.docs[0];
+          useLogStore.getState().addTurn({ role: 'user', text: `Selected file: ${doc.name}`, isFinal: true });
+          if (connected) {
+             client.send({ text: `I selected a file named "${doc.name}" (ID: ${doc.id}) using Google Picker. Can you help me with it?` });
+          }
+        }
+      })
+      .build();
+    picker.setVisible(true);
+  };
 
   const { stream, videoRef, isWebcamActive, isScreenShareActive, startWebcam, startScreenShare, stopStream } = useVideoStream();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -376,6 +420,10 @@ Output only natural spoken text. No stage directions, no brackets, no role label
       if (toolId == 'location' || toolId == 'map') {
          handleLocationSkillClick();
          return;
+      }
+      if (toolId === 'picker') {
+        handleOpenPicker();
+        return;
       }
       setActiveOverlay(toolId);
     } else {
