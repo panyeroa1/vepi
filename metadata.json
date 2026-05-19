@@ -1,0 +1,11 @@
+{
+  "name": "Remix: Eburon AI Persona",
+  "description": "An interactive AI persona named Beatrice with memory and artifact generation.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

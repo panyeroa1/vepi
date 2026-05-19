@@ -1,0 +1,46 @@
+{
+  "name": "native-audio-function-call-sandbox",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server.ts",
+    "lint": "eslint .",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "start": "node dist/server.cjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@google/genai": "^1.4.0",
+    "@supabase/supabase-js": "^2.106.0",
+    "@types/express": "^5.0.6",
+    "@yudiel/react-qr-scanner": "^2.6.0",
+    "classnames": "^2.5.1",
+    "dotenv": "^17.4.2",
+    "esbuild": "^0.28.0",
+    "eventemitter3": "^5.0.1",
+    "express": "^5.2.1",
+    "firebase": "^12.13.0",
+    "firebase-admin": "^13.10.0",
+    "lodash": "^4.17.21",
+    "lucide-react": "^1.16.0",
+    "maplibre-gl": "^5.24.0",
+    "path": "^0.12.7",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "tsx": "^4.22.3",
+    "vite": "^6.3.5",
+    "zustand": "^5.0.5"
+  },
+  "devDependencies": {
+    "@firebase/eslint-plugin-security-rules": "^0.0.2",
+    "@types/node": "^22.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@typescript-eslint/parser": "^8.59.3",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^10.4.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}
